@@ -70,10 +70,14 @@
                 <div id="spotifyControls" class="audio-source-controls">
                     <input type="text" id="clientId" placeholder="Client ID">
                     <input type="text" id="clientSecret" placeholder="Client Secret">
-                    <input type="text" id="accessToken" placeholder="Access Token">
-                    <input type="text" id="refreshToken" placeholder="Refresh Token">
-                    <button id="saveCredentials">Save Credentials</button>
-                    <button id="connectSpotify">Connect Spotify</button>
+                    <div id="manualTokens" style="display: none;">
+                        <input type="text" id="accessToken" placeholder="Access Token (Optional)">
+                        <input type="text" id="refreshToken" placeholder="Refresh Token (Optional)">
+                    </div>
+                    <button id="authorizeSpotify">Authorize with Spotify</button>
+                    <button id="toggleManual">Manual Token Entry</button>
+                    <button id="saveCredentials" style="display: none;">Save Credentials</button>
+                    <button id="connectSpotify" style="display: none;">Connect Spotify</button>
                 </div>
                 
                 <div id="micControls" class="audio-source-controls" style="display: none;">

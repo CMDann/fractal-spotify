@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spotify Authorization - Fractal Art Visualizer</title>
+    <style>
+        body {
+            font-family: 'Courier New', monospace;
+            background: #000;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            text-align: center;
+        }
+        .container {
+            background: #111;
+            border: 1px solid #333;
+            padding: 40px;
+            max-width: 500px;
+        }
+        h1 {
+            color: #fff;
+            margin-bottom: 20px;
+        }
+        .status {
+            margin: 20px 0;
+            font-size: 14px;
+        }
+        .success {
+            color: #4CAF50;
+        }
+        .error {
+            color: #f44336;
+        }
+        .loading {
+            color: #2196F3;
+        }
+        .spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #333;
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        button {
+            background: #222;
+            border: 1px solid #666;
+            color: #fff;
+            padding: 10px 20px;
+            cursor: pointer;
+            font-family: 'Courier New', monospace;
+            margin-top: 20px;
+        }
+        button:hover {
+            background: #333;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Spotify Authorization</h1>
+        <div id="status" class="status loading">
+            <div class="spinner"></div>
+            Processing authorization...
+        </div>
+        <div id="details"></div>
+        <button id="returnBtn" onclick="returnToApp()" style="display: none;">
+            Return to Fractal Visualizer
+        </button>
+    </div>
+
+    <script>
+        function getUrlParams() {
+            const params = new URLSearchParams(window.location.search);
+            return {
+                code: params.get('code'),
+                state: params.get('state'),
+                error: params.get('error')
+            };
+        }
+
+        function showStatus(message, type, details = '') {
+            const statusEl = document.getElementById('status');
+            const detailsEl = document.getElementById('details');
+            const returnBtn = document.getElementById('returnBtn');
+            
+            statusEl.className = `status ${type}`;
+            statusEl.innerHTML = message;
+            detailsEl.innerHTML = details;
+            returnBtn.style.display = 'block';
+        }
+
+        function returnToApp() {
+            window.location.href = '/';
+        }
+
+        async function processCallback() {
+            const { code, state, error } = getUrlParams();
+            
+            if (error) {
+                showStatus(
+                    '❌ Authorization Failed', 
+                    'error',
+                    `Error: ${error}<br>Please try again.`
+                );
+                return;
+            }
+
+            if (!code) {
+                showStatus(
+                    '❌ No Authorization Code', 
+                    'error',
+                    'No authorization code received from Spotify.'
+                );
+                return;
+            }
+
+            try {
+                // Get stored credentials
+                const savedCreds = localStorage.getItem('spotify_credentials');
+                const savedState = localStorage.getItem('spotify_auth_state');
+                
+                if (!savedCreds) {
+                    showStatus(
+                        '❌ Missing Credentials', 
+                        'error',
+                        'Client credentials not found. Please start the authorization process again.'
+                    );
+                    return;
+                }
+
+                if (state !== savedState) {
+                    showStatus(
+                        '❌ Invalid State', 
+                        'error',
+                        'Security check failed. Please try again.'
+                    );
+                    return;
+                }
+
+                const credentials = JSON.parse(savedCreds);
+                // Use HTTPS if available, otherwise HTTP
+                const protocol = window.location.protocol;
+                const hostname = window.location.hostname;
+                const port = protocol === 'https:' ? '3443' : '3000';
+                const redirectUri = `${protocol}//${hostname}:${port}/callback`;
+
+                // Exchange code for tokens
+                const response = await fetch('/api/spotify/exchange-token', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        code: code,
+                        client_id: credentials.clientId,
+                        client_secret: credentials.clientSecret,
+                        redirect_uri: redirectUri
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.access_token) {
+                    // Update credentials
+                    credentials.accessToken = data.access_token;
+                    credentials.refreshToken = data.refresh_token;
+                    credentials.expiresAt = data.expires_at;
+                    
+                    localStorage.setItem('spotify_credentials', JSON.stringify(credentials));
+                    localStorage.removeItem('spotify_auth_state');
+
+                    showStatus(
+                        '✅ Authorization Successful!', 
+                        'success',
+                        'Your Spotify account has been connected successfully.<br>You can now use all Spotify features in the visualizer.'
+                    );
+                } else {
+                    console.error('Token exchange error:', data);
+                    showStatus(
+                        '❌ Token Exchange Failed', 
+                        'error',
+                        `Error: ${data.error || 'Unknown error'}<br>Please try again.`
+                    );
+                }
+            } catch (error) {
+                console.error('Callback processing error:', error);
+                showStatus(
+                    '❌ Processing Error', 
+                    'error',
+                    'An error occurred while processing the authorization.<br>Please try again.'
+                );
+            }
+        }
+
+        // Start processing when page loads
+        window.addEventListener('DOMContentLoaded', processCallback);
+    </script>
+</body>
+</html>

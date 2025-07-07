@@ -14,6 +14,8 @@ class SpotifyIntegration {
         this.updateInterval = null;
         
         this.loadCredentials();
+        this.setupOAuthHandlers();
+        this.checkForAuthCallback();
     }
     
     async loadCredentials() {
@@ -46,6 +48,161 @@ class SpotifyIntegration {
         if (this.credentials.refreshToken) {
             document.getElementById('refreshToken').value = this.credentials.refreshToken;
         }
+        
+        this.updateUIState();
+    }
+    
+    updateUIState() {
+        const hasCredentials = this.credentials.clientId && this.credentials.clientSecret;
+        const hasTokens = this.credentials.accessToken && this.credentials.refreshToken;
+        
+        document.getElementById('authorizeSpotify').style.display = hasCredentials ? 'block' : 'none';
+        document.getElementById('connectSpotify').style.display = hasTokens ? 'block' : 'none';
+        
+        if (hasTokens) {
+            document.getElementById('authorizeSpotify').textContent = 'Re-authorize Spotify';
+        }
+    }
+    
+    setupOAuthHandlers() {
+        document.getElementById('authorizeSpotify').addEventListener('click', () => {
+            this.startOAuthFlow();
+        });
+        
+        document.getElementById('toggleManual').addEventListener('click', () => {
+            this.toggleManualEntry();
+        });
+        
+        document.getElementById('clientId').addEventListener('input', () => {
+            this.credentials.clientId = document.getElementById('clientId').value;
+            this.updateUIState();
+        });
+        
+        document.getElementById('clientSecret').addEventListener('input', () => {
+            this.credentials.clientSecret = document.getElementById('clientSecret').value;
+            this.updateUIState();
+        });
+    }
+    
+    toggleManualEntry() {
+        const manualTokens = document.getElementById('manualTokens');
+        const saveBtn = document.getElementById('saveCredentials');
+        const toggleBtn = document.getElementById('toggleManual');
+        
+        if (manualTokens.style.display === 'none') {
+            manualTokens.style.display = 'block';
+            saveBtn.style.display = 'block';
+            toggleBtn.textContent = 'Hide Manual Entry';
+        } else {
+            manualTokens.style.display = 'none';
+            saveBtn.style.display = 'none';
+            toggleBtn.textContent = 'Manual Token Entry';
+        }
+    }
+    
+    async startOAuthFlow() {
+        const clientId = document.getElementById('clientId').value.trim();
+        const clientSecret = document.getElementById('clientSecret').value.trim();
+        
+        if (!clientId || !clientSecret) {
+            alert('Please enter both Client ID and Client Secret');
+            return;
+        }
+        
+        this.credentials.clientId = clientId;
+        this.credentials.clientSecret = clientSecret;
+        localStorage.setItem('spotify_credentials', JSON.stringify(this.credentials));
+        
+        try {
+            // Use HTTPS if available, otherwise HTTP
+            const protocol = window.location.protocol;
+            const hostname = window.location.hostname;
+            const port = protocol === 'https:' ? '3443' : '3000';
+            const redirectUri = `${protocol}//${hostname}:${port}/callback`;
+            
+            const response = await fetch('/api/spotify/auth-url', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    client_id: clientId,
+                    redirect_uri: redirectUri
+                })
+            });
+            
+            const data = await response.json();
+            
+            if (data.auth_url) {
+                localStorage.setItem('spotify_auth_state', data.state);
+                window.location.href = data.auth_url;
+            } else {
+                alert('Error generating authorization URL');
+            }
+        } catch (error) {
+            console.error('Error starting OAuth flow:', error);
+            alert('Error starting authorization process');
+        }
+    }
+    
+    checkForAuthCallback() {
+        // Check if we just returned from authorization
+        const wasAuthorizing = localStorage.getItem('spotify_auth_state');
+        if (wasAuthorizing && !window.location.search.includes('code')) {
+            // We might have just returned from callback page
+            setTimeout(() => {
+                this.loadCredentials();
+            }, 500);
+        }
+    }
+    
+    clearUrl() {
+        const url = new URL(window.location);
+        url.search = '';
+        window.history.replaceState({}, document.title, url.toString());
+    }
+    
+    async exchangeCodeForTokens(code) {
+        try {
+            // Use HTTPS if available, otherwise HTTP
+            const protocol = window.location.protocol;
+            const hostname = window.location.hostname;
+            const port = protocol === 'https:' ? '3443' : '3000';
+            const redirectUri = `${protocol}//${hostname}:${port}/callback`;
+            
+            const response = await fetch('/api/spotify/exchange-token', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    code: code,
+                    client_id: this.credentials.clientId,
+                    client_secret: this.credentials.clientSecret,
+                    redirect_uri: redirectUri
+                })
+            });
+            
+            const data = await response.json();
+            
+            if (data.access_token) {
+                this.credentials.accessToken = data.access_token;
+                this.credentials.refreshToken = data.refresh_token;
+                this.credentials.expiresAt = data.expires_at;
+                
+                localStorage.setItem('spotify_credentials', JSON.stringify(this.credentials));
+                localStorage.removeItem('spotify_auth_state');
+                
+                this.populateFields();
+                alert('Spotify authorization successful! You can now connect.');
+            } else {
+                console.error('Token exchange error:', data);
+                alert('Error exchanging authorization code for tokens');
+            }
+        } catch (error) {
+            console.error('Error exchanging code for tokens:', error);
+            alert('Error completing authorization');
+        }
     }
     
     async saveCredentials() {
@@ -66,6 +223,7 @@ class SpotifyIntegration {
                 body: JSON.stringify(this.credentials)
             });
             
+            this.updateUIState();
             alert('Credentials saved successfully!');
         } catch (error) {
             console.error('Error saving credentials:', error);
