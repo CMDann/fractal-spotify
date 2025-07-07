@@ -128,6 +128,21 @@ class FractalApp {
         });
     }
     
+    toggleFullscreen() {
+        const container = document.querySelector('.container');
+        if (container.classList.contains('fullscreen')) {
+            container.classList.remove('fullscreen');
+            document.getElementById('fullscreenBtn').textContent = '⛶';
+        } else {
+            container.classList.add('fullscreen');
+            document.getElementById('fullscreenBtn').textContent = '⛷';
+            
+            setTimeout(() => {
+                this.fractalEngine.resize();
+            }, 100);
+        }
+    }
+    
     updateColors() {
         const primary = this.hexToRgb(document.getElementById('primaryColor').value);
         const secondary = this.hexToRgb(document.getElementById('secondaryColor').value);

@@ -1,9 +1,7 @@
 # Created by https://www.toptal.com/developers/gitignore/api/osx,node
 # Edit at https://www.toptal.com/developers/gitignore?templates=osx,node
 
-*.crt
-*.key
-*.db
+certs/*
 
 ### Node ###
 # Logs

@@ -195,64 +195,116 @@ button:disabled {
     background: #222;
 }
 
-.media-controls {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    background: #111;
-    border-top: 1px solid #333;
-    padding: 10px;
+.media-buttons-sidebar {
     display: flex;
-    align-items: center;
-    gap: 20px;
-    font-size: 11px;
+    justify-content: center;
+    gap: 8px;
+    margin-bottom: 10px;
 }
 
-.media-buttons {
-    display: flex;
-    gap: 5px;
-}
-
-.media-buttons button {
-    width: auto;
-    padding: 5px 8px;
+.media-buttons-sidebar button {
+    width: 35px;
+    height: 35px;
+    padding: 0;
     margin: 0;
     background: #222;
     border: 1px solid #444;
     color: #fff;
     cursor: pointer;
-    font-size: 16px;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
-.media-buttons button:hover {
+.media-buttons-sidebar button:hover {
     background: #333;
 }
 
-.progress-container {
-    flex: 1;
-    display: flex;
-    align-items: center;
-    gap: 10px;
+.progress-section {
+    margin-bottom: 10px;
 }
 
-.progress-container span {
-    min-width: 35px;
+.time-display {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 5px;
     font-size: 10px;
+    color: #ccc;
 }
 
-#progressBar {
-    flex: 1;
+.progress-slider {
+    width: 100%;
 }
 
-.volume-container {
+.volume-section {
+    margin-bottom: 10px;
+}
+
+.volume-section label {
+    display: block;
+    margin-bottom: 5px;
+    font-size: 11px;
+}
+
+.volume-slider {
+    width: 100%;
+}
+
+#currentTrackDisplay {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+}
+
+#trackArtwork {
+    width: 80px;
+    height: 80px;
+    background: #222;
+    border: 1px solid #444;
     display: flex;
     align-items: center;
-    gap: 5px;
+    justify-content: center;
+    font-size: 24px;
+    color: #666;
 }
 
-#volumeSlider {
-    width: 80px;
+#trackArtwork img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+#trackDetails {
+    text-align: center;
+    width: 100%;
+}
+
+#trackName {
+    font-size: 12px;
+    font-weight: bold;
+    margin-bottom: 3px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+#artistName {
+    font-size: 11px;
+    color: #ccc;
+    margin-bottom: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+#albumName {
+    font-size: 10px;
+    color: #999;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .audio-source-controls {
@@ -273,8 +325,7 @@ button:disabled {
     background: #000;
 }
 
-.fullscreen .control-panel,
-.fullscreen .media-controls {
+.fullscreen .control-panel {
     display: none;
 }
 

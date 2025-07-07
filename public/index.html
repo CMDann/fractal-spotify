@@ -18,6 +18,19 @@
                     <option value="julia">Julia Set</option>
                     <option value="burning-ship">Burning Ship</option>
                     <option value="sierpinski">Sierpinski Triangle</option>
+                    <option value="tricorn">Tricorn</option>
+                    <option value="multibrot">Multibrot</option>
+                    <option value="phoenix">Phoenix</option>
+                    <option value="newton">Newton</option>
+                    <option value="biomorphs">Biomorphs</option>
+                    <option value="lyapunov">Lyapunov</option>
+                    <option value="magnet">Magnet</option>
+                    <option value="celtic">Celtic</option>
+                    <option value="heart">Heart</option>
+                    <option value="spider">Spider</option>
+                    <option value="fish-eye">Fish Eye</option>
+                    <option value="duck">Duck</option>
+                    <option value="cosmic">Cosmic</option>
                 </select>
             </div>
 
@@ -70,7 +83,40 @@
                 <button id="toggleManual">Manual Token Entry</button>
                 <button id="saveCredentials" style="display: none;">Save Credentials</button>
                 <button id="connectSpotify" style="display: none;">Connect Spotify</button>
-                <div id="trackInfo"></div>
+            </div>
+
+            <div class="section" id="nowPlayingSection" style="display: none;">
+                <h3>Now Playing</h3>
+                <div id="currentTrackDisplay">
+                    <div id="trackArtwork"></div>
+                    <div id="trackDetails">
+                        <div id="trackName"></div>
+                        <div id="artistName"></div>
+                        <div id="albumName"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section" id="mediaControlsSection" style="display: none;">
+                <h3>Playback Controls</h3>
+                <div class="media-buttons-sidebar">
+                    <button id="prevBtn">⏮</button>
+                    <button id="playPauseBtn">⏯</button>
+                    <button id="nextBtn">⏭</button>
+                </div>
+                
+                <div class="progress-section">
+                    <div class="time-display">
+                        <span id="currentTime">0:00</span>
+                        <span id="totalTime">0:00</span>
+                    </div>
+                    <input type="range" id="progressBar" min="0" max="100" value="0" class="progress-slider">
+                </div>
+                
+                <div class="volume-section">
+                    <label>Volume</label>
+                    <input type="range" id="volumeSlider" min="0" max="100" value="50" class="volume-slider">
+                </div>
             </div>
 
             <div class="section">
@@ -90,38 +136,7 @@
 
         <div class="canvas-container">
             <canvas id="fractalCanvas"></canvas>
-            
-            <div id="albumCover" class="album-cover" style="display: none;">
-                <img id="albumArt" src="" alt="Album Cover">
-                <div id="nowPlaying">
-                    <div id="songTitle"></div>
-                    <div id="artistName"></div>
-                    <div id="albumName"></div>
-                </div>
-            </div>
-            
             <button id="fullscreenBtn" class="fullscreen-btn">⛶</button>
-        </div>
-        
-        <div id="mediaControls" class="media-controls">
-            <div class="media-buttons">
-                <button id="prevBtn">⏮</button>
-                <button id="playPauseBtn">⏯</button>
-                <button id="nextBtn">⏭</button>
-                <button id="shuffleBtn">🔀</button>
-                <button id="repeatBtn">🔁</button>
-            </div>
-            
-            <div class="progress-container">
-                <span id="currentTime">0:00</span>
-                <input type="range" id="progressBar" min="0" max="100" value="0">
-                <span id="totalTime">0:00</span>
-            </div>
-            
-            <div class="volume-container">
-                <span>🔊</span>
-                <input type="range" id="volumeSlider" min="0" max="100" value="50">
-            </div>
         </div>
     </div>
 

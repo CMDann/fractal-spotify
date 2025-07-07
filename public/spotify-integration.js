@@ -352,18 +352,53 @@ class SpotifyIntegration {
     }
     
     processAudioData() {
-        if (!this.analysisData || !this.audioFeatures) return;
+        if (!this.audioFeatures) {
+            // Use basic audio features to drive visualization
+            this.applyBasicVisualization();
+            return;
+        }
         
-        const currentTime = Date.now();
-        const trackStartTime = currentTime - (this.currentTrack.progress_ms || 0);
-        const relativeTime = (currentTime - trackStartTime) / 1000;
+        if (this.analysisData && this.currentProgress > 0) {
+            // Use detailed analysis when available
+            this.applyDetailedVisualization();
+        } else {
+            // Fallback to audio features only
+            this.applyBasicVisualization();
+        }
+    }
+    
+    applyBasicVisualization() {
+        if (!this.audioFeatures || !window.fractalEngine) return;
         
+        // Create visualization data from audio features
+        const audioData = {
+            energy: this.audioFeatures.energy || 0.5,
+            valence: this.audioFeatures.valence || 0.5,
+            tempo: this.audioFeatures.tempo || 120,
+            danceability: this.audioFeatures.danceability || 0.5,
+            acousticness: this.audioFeatures.acousticness || 0.5,
+            instrumentalness: this.audioFeatures.instrumentalness || 0.5,
+            loudness: Math.max(0, Math.min(1, (this.audioFeatures.loudness + 60) / 60)) || 0.5,
+            bass: this.audioFeatures.energy * 0.8,
+            mid: this.audioFeatures.valence,
+            treble: this.audioFeatures.danceability
+        };
+        
+        window.fractalEngine.applyMusicData(audioData);
+    }
+    
+    applyDetailedVisualization() {
+        if (!this.analysisData || !this.audioFeatures || !window.fractalEngine) return;
+        
+        const relativeTime = this.currentProgress / 1000; // Convert to seconds
         const segments = this.analysisData.segments || [];
+        
+        // Find current segment
         const currentSegment = segments.find(seg => 
             relativeTime >= seg.start && relativeTime < seg.start + seg.duration
         );
         
-        if (currentSegment && window.fractalEngine) {
+        if (currentSegment) {
             const intensity = Math.max(
                 currentSegment.loudness_max || 0,
                 currentSegment.loudness_start || 0
@@ -371,9 +406,15 @@ class SpotifyIntegration {
             
             const normalizedIntensity = Math.max(0, Math.min(1, (intensity + 60) / 60));
             
-            const bassData = currentSegment.pitches ? currentSegment.pitches.slice(0, 4) : [0.5, 0.5, 0.5, 0.5];
-            const midData = currentSegment.pitches ? currentSegment.pitches.slice(4, 8) : [0.5, 0.5, 0.5, 0.5];
-            const trebleData = currentSegment.pitches ? currentSegment.pitches.slice(8, 12) : [0.5, 0.5, 0.5, 0.5];
+            // Use pitches for frequency analysis
+            const pitches = currentSegment.pitches || new Array(12).fill(0.5);
+            const bassData = pitches.slice(0, 4);
+            const midData = pitches.slice(4, 8);
+            const trebleData = pitches.slice(8, 12);
+            
+            // Use timbres for spectral characteristics
+            const timbres = currentSegment.timbre || new Array(12).fill(0);
+            const normalizedTimbres = timbres.map(t => Math.max(0, Math.min(1, (t + 100) / 200)));
             
             const audioData = {
                 energy: this.audioFeatures.energy,
@@ -381,56 +422,61 @@ class SpotifyIntegration {
                 tempo: this.audioFeatures.tempo,
                 danceability: this.audioFeatures.danceability,
                 intensity: normalizedIntensity,
+                loudness: normalizedIntensity,
                 bass: bassData.reduce((a, b) => a + b) / bassData.length,
                 mid: midData.reduce((a, b) => a + b) / midData.length,
-                treble: trebleData.reduce((a, b) => a + b) / trebleData.length
+                treble: trebleData.reduce((a, b) => a + b) / trebleData.length,
+                brightness: normalizedTimbres[1] || 0.5,
+                roughness: normalizedTimbres[2] || 0.5,
+                spectralCentroid: normalizedTimbres[0] || 0.5
             };
             
             window.fractalEngine.applyMusicData(audioData);
+        } else {
+            this.applyBasicVisualization();
         }
     }
     
     updateTrackDisplay() {
-        const trackInfo = document.getElementById('trackInfo');
         if (this.currentTrack) {
-            trackInfo.innerHTML = `
-                <strong>Now Playing:</strong><br>
-                ${this.currentTrack.name}<br>
-                <small>by ${this.currentTrack.artists.map(a => a.name).join(', ')}</small>
-            `;
-            
-            this.showAlbumCover();
+            this.showCurrentTrack();
+            this.showMediaControls();
         } else {
-            trackInfo.innerHTML = 'No track playing';
-            this.hideAlbumCover();
+            this.hideCurrentTrack();
+            this.hideMediaControls();
         }
     }
     
-    showAlbumCover() {
+    showCurrentTrack() {
         if (!this.currentTrack) return;
         
-        const albumCover = document.getElementById('albumCover');
-        const albumArt = document.getElementById('albumArt');
-        const songTitle = document.getElementById('songTitle');
-        const artistName = document.getElementById('artistName');
-        const albumName = document.getElementById('albumName');
+        // Show the now playing section
+        document.getElementById('nowPlayingSection').style.display = 'block';
         
+        // Update artwork
+        const trackArtwork = document.getElementById('trackArtwork');
         if (this.currentTrack.album?.images?.length > 0) {
-            albumArt.src = this.currentTrack.album.images[0].url;
-            albumArt.style.display = 'block';
+            trackArtwork.innerHTML = `<img src="${this.currentTrack.album.images[0].url}" alt="Album Cover">`;
         } else {
-            albumArt.style.display = 'none';
+            trackArtwork.innerHTML = '🎵';
         }
         
-        songTitle.textContent = this.currentTrack.name;
-        artistName.textContent = this.currentTrack.artists.map(a => a.name).join(', ');
-        albumName.textContent = this.currentTrack.album?.name || '';
-        
-        albumCover.style.display = 'block';
+        // Update track details
+        document.getElementById('trackName').textContent = this.currentTrack.name;
+        document.getElementById('artistName').textContent = this.currentTrack.artists.map(a => a.name).join(', ');
+        document.getElementById('albumName').textContent = this.currentTrack.album?.name || '';
     }
     
-    hideAlbumCover() {
-        document.getElementById('albumCover').style.display = 'none';
+    showMediaControls() {
+        document.getElementById('mediaControlsSection').style.display = 'block';
+    }
+    
+    hideCurrentTrack() {
+        document.getElementById('nowPlayingSection').style.display = 'none';
+    }
+    
+    hideMediaControls() {
+        document.getElementById('mediaControlsSection').style.display = 'none';
     }
     
     async togglePlayback() {
@@ -558,7 +604,8 @@ class SpotifyIntegration {
             this.updateInterval = null;
         }
         
-        document.getElementById('trackInfo').innerHTML = 'Disconnected from Spotify';
+        this.hideCurrentTrack();
+        this.hideMediaControls();
         document.getElementById('connectSpotify').textContent = 'Connect Spotify';
         document.getElementById('connectSpotify').disabled = false;
     }
