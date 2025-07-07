@@ -12,6 +12,9 @@ class SpotifyIntegration {
         this.isConnected = false;
         this.analysisData = null;
         this.updateInterval = null;
+        this.isPlaying = false;
+        this.currentProgress = 0;
+        this.currentDuration = 0;
         
         this.loadCredentials();
         this.setupOAuthHandlers();
@@ -279,6 +282,7 @@ class SpotifyIntegration {
         this.updateInterval = setInterval(() => {
             this.getCurrentTrack();
             this.getAudioAnalysis();
+            this.updateMediaControls();
         }, 1000);
     }
     
@@ -299,6 +303,11 @@ class SpotifyIntegration {
                     this.updateTrackDisplay();
                     this.getAudioFeatures();
                 }
+                
+                // Update playback state
+                this.isPlaying = data.is_playing;
+                this.currentProgress = data.progress_ms || 0;
+                this.currentDuration = data.item?.duration_ms || 0;
             }
         } catch (error) {
             console.error('Error fetching current track:', error);
@@ -474,6 +483,71 @@ class SpotifyIntegration {
             });
         } catch (error) {
             console.error('Error going to next track:', error);
+        }
+    }
+    
+    updateMediaControls() {
+        // Update play/pause button
+        const playPauseBtn = document.getElementById('playPauseBtn');
+        if (playPauseBtn) {
+            playPauseBtn.textContent = this.isPlaying ? '⏸' : '▶';
+        }
+        
+        // Update progress bar
+        const progressBar = document.getElementById('progressBar');
+        if (progressBar && this.currentDuration > 0) {
+            const progress = (this.currentProgress / this.currentDuration) * 100;
+            progressBar.value = progress;
+        }
+        
+        // Update time display
+        const currentTimeEl = document.getElementById('currentTime');
+        const totalTimeEl = document.getElementById('totalTime');
+        if (currentTimeEl) {
+            currentTimeEl.textContent = this.formatTime(this.currentProgress / 1000);
+        }
+        if (totalTimeEl) {
+            totalTimeEl.textContent = this.formatTime(this.currentDuration / 1000);
+        }
+    }
+    
+    formatTime(seconds) {
+        const mins = Math.floor(seconds / 60);
+        const secs = Math.floor(seconds % 60);
+        return `${mins}:${secs.toString().padStart(2, '0')}`;
+    }
+    
+    async seek(position) {
+        if (!this.credentials.accessToken || !this.currentDuration) return;
+        
+        const seekPosition = Math.floor(position * this.currentDuration);
+        
+        try {
+            await fetch(`https://api.spotify.com/v1/me/player/seek?position_ms=${seekPosition}`, {
+                method: 'PUT',
+                headers: {
+                    'Authorization': `Bearer ${this.credentials.accessToken}`
+                }
+            });
+        } catch (error) {
+            console.error('Error seeking:', error);
+        }
+    }
+    
+    async setVolume(volume) {
+        if (!this.credentials.accessToken) return;
+        
+        const volumePercent = Math.floor(volume * 100);
+        
+        try {
+            await fetch(`https://api.spotify.com/v1/me/player/volume?volume_percent=${volumePercent}`, {
+                method: 'PUT',
+                headers: {
+                    'Authorization': `Bearer ${this.credentials.accessToken}`
+                }
+            });
+        } catch (error) {
+            console.error('Error setting volume:', error);
         }
     }
     

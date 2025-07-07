@@ -59,41 +59,17 @@
             </div>
 
             <div class="section">
-                <h3>Audio Source</h3>
-                <select id="audioSource">
-                    <option value="spotify">Spotify API</option>
-                    <option value="microphone">Microphone</option>
-                    <option value="youtube">YouTube</option>
-                    <option value="local">Local File</option>
-                </select>
-                
-                <div id="spotifyControls" class="audio-source-controls">
-                    <input type="text" id="clientId" placeholder="Client ID">
-                    <input type="text" id="clientSecret" placeholder="Client Secret">
-                    <div id="manualTokens" style="display: none;">
-                        <input type="text" id="accessToken" placeholder="Access Token (Optional)">
-                        <input type="text" id="refreshToken" placeholder="Refresh Token (Optional)">
-                    </div>
-                    <button id="authorizeSpotify">Authorize with Spotify</button>
-                    <button id="toggleManual">Manual Token Entry</button>
-                    <button id="saveCredentials" style="display: none;">Save Credentials</button>
-                    <button id="connectSpotify" style="display: none;">Connect Spotify</button>
+                <h3>Spotify Integration</h3>
+                <input type="text" id="clientId" placeholder="Client ID">
+                <input type="text" id="clientSecret" placeholder="Client Secret">
+                <div id="manualTokens" style="display: none;">
+                    <input type="text" id="accessToken" placeholder="Access Token (Optional)">
+                    <input type="text" id="refreshToken" placeholder="Refresh Token (Optional)">
                 </div>
-                
-                <div id="micControls" class="audio-source-controls" style="display: none;">
-                    <button id="connectMic">Connect Microphone</button>
-                </div>
-                
-                <div id="youtubeControls" class="audio-source-controls" style="display: none;">
-                    <input type="text" id="youtubeUrl" placeholder="YouTube Video URL">
-                    <button id="loadYoutube">Load Video</button>
-                </div>
-                
-                <div id="localControls" class="audio-source-controls" style="display: none;">
-                    <input type="file" id="localFile" accept="audio/*">
-                    <button id="loadLocal">Load File</button>
-                </div>
-                
+                <button id="authorizeSpotify">Authorize with Spotify</button>
+                <button id="toggleManual">Manual Token Entry</button>
+                <button id="saveCredentials" style="display: none;">Save Credentials</button>
+                <button id="connectSpotify" style="display: none;">Connect Spotify</button>
                 <div id="trackInfo"></div>
             </div>
 
@@ -151,7 +127,6 @@
 
     <script src="fractal-engine.js"></script>
     <script src="spotify-integration.js"></script>
-    <script src="media-manager.js"></script>
     <script src="recording.js"></script>
     <script src="app.js"></script>
 </body>

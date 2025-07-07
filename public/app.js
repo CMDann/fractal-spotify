@@ -26,12 +26,10 @@ class FractalApp {
     initializeComponents() {
         this.fractalEngine = new FractalEngine(this.canvas);
         this.spotifyIntegration = new SpotifyIntegration();
-        this.mediaManager = new MediaManager();
         this.recordingManager = new RecordingManager(this.canvas);
         
         window.fractalEngine = this.fractalEngine;
         window.spotifyIntegration = this.spotifyIntegration;
-        window.mediaManager = this.mediaManager;
     }
     
     setupEventListeners() {
@@ -72,6 +70,33 @@ class FractalApp {
         
         document.getElementById('connectSpotify').addEventListener('click', () => {
             this.spotifyIntegration.connect();
+        });
+        
+        // Media control event listeners
+        document.getElementById('playPauseBtn').addEventListener('click', () => {
+            this.spotifyIntegration.togglePlayback();
+        });
+        
+        document.getElementById('prevBtn').addEventListener('click', () => {
+            this.spotifyIntegration.previousTrack();
+        });
+        
+        document.getElementById('nextBtn').addEventListener('click', () => {
+            this.spotifyIntegration.nextTrack();
+        });
+        
+        document.getElementById('progressBar').addEventListener('input', (e) => {
+            const position = e.target.value / 100;
+            this.spotifyIntegration.seek(position);
+        });
+        
+        document.getElementById('volumeSlider').addEventListener('input', (e) => {
+            const volume = e.target.value / 100;
+            this.spotifyIntegration.setVolume(volume);
+        });
+        
+        document.getElementById('fullscreenBtn').addEventListener('click', () => {
+            this.toggleFullscreen();
         });
         
         document.getElementById('takePhoto').addEventListener('click', () => {
