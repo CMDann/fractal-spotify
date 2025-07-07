@@ -1,4 +1,4 @@
-![Screenshot](ss.png)
+![Screenshot](img/ss.png)
 
 # Fractal Art Visualizer
 
@@ -54,6 +54,9 @@ npm run start:https
    - **Important**: You'll see a security warning for the self-signed certificate
    - Click "Advanced" and then "Proceed to localhost (unsafe)"
    - This is normal for local development
+
+![Screenshot](img/ss2.png)
+
 
 ### Alternative (HTTP only, no Spotify):
 If you don't need Spotify integration, you can run the HTTP version:
