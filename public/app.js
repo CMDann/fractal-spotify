@@ -63,8 +63,12 @@ class FractalApp {
             document.getElementById('iterationsValue').textContent = e.target.value;
         });
         
+        document.getElementById('saveCredentials').addEventListener('click', () => {
+            this.spotifyIntegration.saveCredentials();
+        });
+        
         document.getElementById('connectSpotify').addEventListener('click', () => {
-            this.connectSpotify();
+            this.spotifyIntegration.connect();
         });
         
         document.getElementById('takePhoto').addEventListener('click', () => {
@@ -113,16 +117,6 @@ class FractalApp {
         ] : [0, 0, 0];
     }
     
-    connectSpotify() {
-        const token = document.getElementById('spotifyToken').value.trim();
-        if (token) {
-            this.spotifyIntegration.setAccessToken(token);
-            document.getElementById('connectSpotify').textContent = 'Connected!';
-            document.getElementById('connectSpotify').disabled = true;
-        } else {
-            alert('Please enter your Spotify access token');
-        }
-    }
     
     toggleGifRecording() {
         const button = document.getElementById('recordGif');

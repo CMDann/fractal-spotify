@@ -105,10 +105,10 @@ class FractalEngine {
         return maxIter;
     }
     
-    sierpinski(x, y) {
+    sierpinski(x, y, width, height) {
         const scale = 300 * this.zoom;
-        const centerX = this.width / 2;
-        const centerY = this.height / 2;
+        const centerX = width / 2;
+        const centerY = height / 2;
         
         let px = (x - centerX) / scale + this.offsetX;
         let py = (y - centerY) / scale + this.offsetY;
@@ -170,31 +170,35 @@ class FractalEngine {
     }
     
     render() {
-        const data = this.imageData.data;
+        if (!this.needsRedraw) return;
         
-        for (let y = 0; y < this.height; y++) {
-            for (let x = 0; x < this.width; x++) {
+        const data = this.imageData.data;
+        const scaledWidth = this.offscreenCanvas.width;
+        const scaledHeight = this.offscreenCanvas.height;
+        
+        for (let y = 0; y < scaledHeight; y++) {
+            for (let x = 0; x < scaledWidth; x++) {
                 let iterations;
                 
                 switch (this.fractalType) {
                     case 'mandelbrot':
-                        iterations = this.mandelbrot(x, y);
+                        iterations = this.mandelbrot(x, y, scaledWidth, scaledHeight);
                         break;
                     case 'julia':
-                        iterations = this.julia(x, y);
+                        iterations = this.julia(x, y, scaledWidth, scaledHeight);
                         break;
                     case 'burning-ship':
-                        iterations = this.burningShip(x, y);
+                        iterations = this.burningShip(x, y, scaledWidth, scaledHeight);
                         break;
                     case 'sierpinski':
-                        iterations = this.sierpinski(x, y);
+                        iterations = this.sierpinski(x, y, scaledWidth, scaledHeight);
                         break;
                     default:
-                        iterations = this.mandelbrot(x, y);
+                        iterations = this.mandelbrot(x, y, scaledWidth, scaledHeight);
                 }
                 
                 const color = this.getColor(iterations);
-                const index = (y * this.width + x) * 4;
+                const index = (y * scaledWidth + x) * 4;
                 
                 data[index] = color[0];
                 data[index + 1] = color[1];
@@ -203,37 +207,48 @@ class FractalEngine {
             }
         }
         
-        this.ctx.putImageData(this.imageData, 0, 0);
+        this.offscreenCtx.putImageData(this.imageData, 0, 0);
+        this.ctx.drawImage(this.offscreenCanvas, 0, 0, this.width, this.height);
+        this.needsRedraw = false;
     }
     
     animate() {
+        const now = performance.now();
+        if (now - this.lastRenderTime < this.frameTime) {
+            requestAnimationFrame(() => this.animate());
+            return;
+        }
+        
         if (this.isAnimating) {
             this.time += this.animationSpeed;
-            this.render();
+            this.needsRedraw = true;
         }
+        
+        this.render();
+        this.lastRenderTime = now;
         requestAnimationFrame(() => this.animate());
     }
     
     setFractalType(type) {
         this.fractalType = type;
-        this.render();
+        this.needsRedraw = true;
     }
     
     setColors(primary, secondary, background) {
         this.colors.primary = primary;
         this.colors.secondary = secondary;
         this.colors.background = background;
-        this.render();
+        this.needsRedraw = true;
     }
     
     setZoom(zoom) {
         this.zoom = zoom;
-        this.render();
+        this.needsRedraw = true;
     }
     
     setIterations(iterations) {
         this.maxIterations = iterations;
-        this.render();
+        this.needsRedraw = true;
     }
     
     setAnimationSpeed(speed) {
@@ -249,23 +264,39 @@ class FractalEngine {
         this.zoom = 1;
         this.offsetX = 0;
         this.offsetY = 0;
-        this.render();
+        this.needsRedraw = true;
     }
     
     applyMusicData(audioData) {
         if (!audioData) return;
         
-        const bass = audioData.slice(0, 60).reduce((a, b) => a + b) / 60;
-        const mid = audioData.slice(60, 120).reduce((a, b) => a + b) / 60;
-        const treble = audioData.slice(120, 180).reduce((a, b) => a + b) / 60;
-        
-        this.animationSpeed = 0.5 + (bass / 255) * 2;
-        this.zoom = 1 + (mid / 255) * 2;
-        
-        const colorIntensity = treble / 255;
-        this.colors.primary[0] = Math.floor(255 * colorIntensity);
-        this.colors.secondary[2] = Math.floor(255 * (1 - colorIntensity));
-        
-        this.render();
+        if (typeof audioData.energy !== 'undefined') {
+            this.animationSpeed = 0.5 + audioData.energy * 2;
+            
+            const bassIntensity = audioData.bass || 0.5;
+            const midIntensity = audioData.mid || 0.5;
+            const trebleIntensity = audioData.treble || 0.5;
+            
+            this.colors.primary[0] = Math.floor(255 * trebleIntensity);
+            this.colors.primary[1] = Math.floor(255 * midIntensity);
+            this.colors.secondary[2] = Math.floor(255 * bassIntensity);
+            
+            this.juliaC.real = -0.7 + (audioData.valence - 0.5) * 0.5;
+            this.juliaC.imag = 0.27015 + (audioData.danceability - 0.5) * 0.3;
+            
+            this.needsRedraw = true;
+        } else {
+            const bass = audioData.slice(0, 60).reduce((a, b) => a + b) / 60;
+            const mid = audioData.slice(60, 120).reduce((a, b) => a + b) / 60;
+            const treble = audioData.slice(120, 180).reduce((a, b) => a + b) / 60;
+            
+            this.animationSpeed = 0.5 + (bass / 255) * 2;
+            
+            const colorIntensity = treble / 255;
+            this.colors.primary[0] = Math.floor(255 * colorIntensity);
+            this.colors.secondary[2] = Math.floor(255 * (1 - colorIntensity));
+            
+            this.needsRedraw = true;
+        }
     }
 }
