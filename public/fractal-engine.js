@@ -74,8 +74,8 @@ class FractalEngine {
         let zx = (x - width / 2) / (width / 4) / this.zoom;
         let zy = (y - height / 2) / (height / 4) / this.zoom;
         
-        let cx = this.juliaC.real + Math.sin(this.time * 0.01) * 0.3;
-        let cy = this.juliaC.imag + Math.cos(this.time * 0.01) * 0.3;
+        let cx = this.juliaC.real + Math.sin(this.time * 0.03) * 0.3;
+        let cy = this.juliaC.imag + Math.cos(this.time * 0.03) * 0.3;
         
         for (let i = 0; i < maxIter; i++) {
             if (zx * zx + zy * zy > 4) {
@@ -425,8 +425,8 @@ class FractalEngine {
         
         for (let i = 0; i < maxIter; i++) {
             // Cosmic web pattern with sine waves
-            const newZx = Math.sin(zx) * Math.cosh(zy) + Math.sin(this.time * 0.01);
-            const newZy = Math.cos(zx) * Math.sinh(zy) + Math.cos(this.time * 0.01);
+            const newZx = Math.sin(zx) * Math.cosh(zy) + Math.sin(this.time * 0.03);
+            const newZy = Math.cos(zx) * Math.sinh(zy) + Math.cos(this.time * 0.03);
             
             if (newZx * newZx + newZy * newZy > 100) {
                 return i;
@@ -444,7 +444,7 @@ class FractalEngine {
         }
         
         const t = iterations / this.maxIterations;
-        const phase = this.time * 0.01 + t * Math.PI * 2;
+        const phase = this.time * 0.05 + t * Math.PI * 2;
         
         const r = Math.floor(
             this.colors.primary[0] * (1 - t) + 
@@ -609,62 +609,23 @@ class FractalEngine {
     applyMusicData(audioData) {
         if (!audioData) return;
         
-        // Spotify audio features integration
+        // Simplified music integration - just subtle color shifts
         if (typeof audioData.energy !== 'undefined') {
-            // Animation speed based on energy and tempo
-            const tempoFactor = (audioData.tempo || 120) / 120; // Normalize around 120 BPM
-            this.animationSpeed = 0.3 + (audioData.energy * 2) + (tempoFactor * 0.5);
-            
-            // Color mapping based on audio characteristics
+            // Subtle color shifts based on music
             const bassIntensity = audioData.bass || 0.5;
             const midIntensity = audioData.mid || 0.5;
             const trebleIntensity = audioData.treble || 0.5;
-            
-            // Use valence for color warmth (happy = warm colors, sad = cool colors)
             const valence = audioData.valence || 0.5;
             
-            // Red channel: influenced by treble and valence
-            this.colors.primary[0] = Math.floor(255 * (trebleIntensity * 0.7 + valence * 0.3));
+            // Only slightly adjust colors, don't override manual settings
+            const colorShift = Math.sin(this.time * 0.02) * 30;
             
-            // Green channel: influenced by mid frequencies and energy
-            this.colors.primary[1] = Math.floor(255 * (midIntensity * 0.8 + audioData.energy * 0.2));
+            this.colors.primary[0] = Math.max(50, Math.min(255, this.colors.primary[0] + colorShift * trebleIntensity));
+            this.colors.primary[1] = Math.max(50, Math.min(255, this.colors.primary[1] + colorShift * midIntensity));
+            this.colors.primary[2] = Math.max(50, Math.min(255, this.colors.primary[2] + colorShift * bassIntensity));
             
-            // Blue channel: influenced by bass and inverse valence (sadness)
-            this.colors.primary[2] = Math.floor(255 * (bassIntensity * 0.7 + (1 - valence) * 0.3));
-            
-            // Secondary color based on complementary characteristics
-            this.colors.secondary[0] = Math.floor(255 * (1 - trebleIntensity) * 0.8);
-            this.colors.secondary[1] = Math.floor(255 * (audioData.acousticness || 0.5));
-            this.colors.secondary[2] = Math.floor(255 * bassIntensity);
-            
-            // Julia set parameters influenced by musical characteristics
-            this.juliaC.real = -0.7 + (valence - 0.5) * 0.8;
-            this.juliaC.imag = 0.27015 + (audioData.danceability - 0.5) * 0.6;
-            
-            // Zoom influenced by loudness/intensity
-            if (audioData.loudness || audioData.intensity) {
-                const intensityFactor = audioData.loudness || audioData.intensity || 0.5;
-                this.zoom = 1 + intensityFactor * 0.5;
-            }
-            
-            // Iteration count influenced by instrumentalness and acousticness
-            if (audioData.instrumentalness !== undefined) {
-                const complexity = (audioData.instrumentalness + (1 - audioData.acousticness || 0)) / 2;
-                this.maxIterations = Math.floor(80 + complexity * 120); // 80-200 range
-            }
-            
-            this.needsRedraw = true;
-        } else {
-            // Fallback for raw audio data (array format)
-            const bass = audioData.slice(0, 60).reduce((a, b) => a + b) / 60;
-            const mid = audioData.slice(60, 120).reduce((a, b) => a + b) / 60;
-            const treble = audioData.slice(120, 180).reduce((a, b) => a + b) / 60;
-            
-            this.animationSpeed = 0.5 + (bass / 255) * 2;
-            
-            const colorIntensity = treble / 255;
-            this.colors.primary[0] = Math.floor(255 * colorIntensity);
-            this.colors.secondary[2] = Math.floor(255 * (1 - colorIntensity));
+            // Very subtle animation speed adjustment
+            this.animationSpeed = 3 + (audioData.energy * 0.5);
             
             this.needsRedraw = true;
         }
