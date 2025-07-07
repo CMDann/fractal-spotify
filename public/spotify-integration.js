@@ -448,10 +448,14 @@ class SpotifyIntegration {
     }
     
     showCurrentTrack() {
-        if (!this.currentTrack) return;
-        
-        // Show the now playing section
-        document.getElementById('nowPlayingSection').style.display = 'block';
+        if (!this.currentTrack) {
+            // Show placeholder when no track
+            document.getElementById('trackArtwork').innerHTML = '🎵';
+            document.getElementById('trackName').textContent = 'No track playing';
+            document.getElementById('artistName').textContent = 'Connect Spotify to see current track';
+            document.getElementById('albumName').textContent = '';
+            return;
+        }
         
         // Update artwork
         const trackArtwork = document.getElementById('trackArtwork');
@@ -468,15 +472,19 @@ class SpotifyIntegration {
     }
     
     showMediaControls() {
-        document.getElementById('mediaControlsSection').style.display = 'block';
+        // Controls are always visible now
     }
     
     hideCurrentTrack() {
-        document.getElementById('nowPlayingSection').style.display = 'none';
+        // Show placeholder instead of hiding
+        document.getElementById('trackArtwork').innerHTML = '🎵';
+        document.getElementById('trackName').textContent = 'No track playing';
+        document.getElementById('artistName').textContent = 'Connect Spotify to see current track';
+        document.getElementById('albumName').textContent = '';
     }
     
     hideMediaControls() {
-        document.getElementById('mediaControlsSection').style.display = 'none';
+        // Controls are always visible now
     }
     
     async togglePlayback() {
@@ -605,7 +613,6 @@ class SpotifyIntegration {
         }
         
         this.hideCurrentTrack();
-        this.hideMediaControls();
         document.getElementById('connectSpotify').textContent = 'Connect Spotify';
         document.getElementById('connectSpotify').disabled = false;
     }

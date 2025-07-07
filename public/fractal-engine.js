@@ -12,7 +12,7 @@ class FractalEngine {
         this.offsetX = 0;
         this.offsetY = 0;
         this.time = 0;
-        this.animationSpeed = 1;
+        this.animationSpeed = 3;
         this.isAnimating = true;
         
         this.colors = {
@@ -28,7 +28,7 @@ class FractalEngine {
         this.offscreenCtx = this.offscreenCanvas.getContext('2d');
         this.needsRedraw = true;
         this.lastRenderTime = 0;
-        this.targetFPS = 30;
+        this.targetFPS = 60;
         this.frameTime = 1000 / this.targetFPS;
         
         this.resize();
@@ -161,7 +161,7 @@ class FractalEngine {
         let cx = (x - width / 2) / (width / 4) / this.zoom + this.offsetX;
         let cy = (y - height / 2) / (height / 4) / this.zoom + this.offsetY;
         
-        const power = 3 + Math.sin(this.time * 0.01) * 2; // Power varies from 1 to 5
+        const power = 3 + Math.sin(this.time * 0.05) * 2; // Power varies from 1 to 5
         
         for (let i = 0; i < maxIter; i++) {
             if (zx * zx + zy * zy > 4) {
@@ -191,8 +191,8 @@ class FractalEngine {
         let cx = (x - width / 2) / (width / 4) / this.zoom + this.offsetX;
         let cy = (y - height / 2) / (height / 4) / this.zoom + this.offsetY;
         
-        const c = 0.5667 + Math.sin(this.time * 0.02) * 0.1;
-        const p = -0.5 + Math.cos(this.time * 0.015) * 0.2;
+        const c = 0.5667 + Math.sin(this.time * 0.08) * 0.1;
+        const p = -0.5 + Math.cos(this.time * 0.06) * 0.2;
         
         for (let i = 0; i < maxIter; i++) {
             if (zx * zx + zy * zy > 4) {
@@ -410,7 +410,7 @@ class FractalEngine {
             }
             
             // Duck fractal with time-varying parameter
-            const param = Math.sin(this.time * 0.01) * 0.5;
+            const param = Math.sin(this.time * 0.04) * 0.5;
             let tmp = zx * zx - zy * zy * (1 + param) + cx;
             zy = 2 * zx * zy * (1 - param) + cy;
             zx = tmp;

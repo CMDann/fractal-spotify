@@ -1,3 +1,5 @@
+![Screenshot](ss.png)
+
 # Fractal Art Visualizer
 
 A real-time fractal art generator with Spotify integration, built with HTML5 Canvas and JavaScript.

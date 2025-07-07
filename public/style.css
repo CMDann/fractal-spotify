@@ -181,18 +181,22 @@ button:disabled {
 
 .fullscreen-btn {
     position: absolute;
-    top: 10px;
-    right: 10px;
-    background: #111;
-    border: 1px solid #333;
-    color: #fff;
-    padding: 5px 8px;
+    top: 5px;
+    right: 5px;
+    background: rgba(0, 0, 0, 0.3);
+    border: none;
+    color: rgba(255, 255, 255, 0.4);
+    padding: 3px 6px;
     cursor: pointer;
-    font-size: 16px;
+    font-size: 12px;
+    border-radius: 3px;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(5px);
 }
 
 .fullscreen-btn:hover {
-    background: #222;
+    background: rgba(0, 0, 0, 0.6);
+    color: rgba(255, 255, 255, 0.8);
 }
 
 .media-buttons-sidebar {
