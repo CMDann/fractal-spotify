@@ -231,8 +231,91 @@ class SpotifyIntegration {
                 ${this.currentTrack.name}<br>
                 <small>by ${this.currentTrack.artists.map(a => a.name).join(', ')}</small>
             `;
+            
+            this.showAlbumCover();
         } else {
             trackInfo.innerHTML = 'No track playing';
+            this.hideAlbumCover();
+        }
+    }
+    
+    showAlbumCover() {
+        if (!this.currentTrack) return;
+        
+        const albumCover = document.getElementById('albumCover');
+        const albumArt = document.getElementById('albumArt');
+        const songTitle = document.getElementById('songTitle');
+        const artistName = document.getElementById('artistName');
+        const albumName = document.getElementById('albumName');
+        
+        if (this.currentTrack.album?.images?.length > 0) {
+            albumArt.src = this.currentTrack.album.images[0].url;
+            albumArt.style.display = 'block';
+        } else {
+            albumArt.style.display = 'none';
+        }
+        
+        songTitle.textContent = this.currentTrack.name;
+        artistName.textContent = this.currentTrack.artists.map(a => a.name).join(', ');
+        albumName.textContent = this.currentTrack.album?.name || '';
+        
+        albumCover.style.display = 'block';
+    }
+    
+    hideAlbumCover() {
+        document.getElementById('albumCover').style.display = 'none';
+    }
+    
+    async togglePlayback() {
+        if (!this.credentials.accessToken) return;
+        
+        try {
+            const response = await fetch('https://api.spotify.com/v1/me/player', {
+                headers: {
+                    'Authorization': `Bearer ${this.credentials.accessToken}`
+                }
+            });
+            
+            if (response.ok) {
+                const data = await response.json();
+                if (data.is_playing) {
+                    await this.pauseTrack();
+                } else {
+                    await this.resumeTrack();
+                }
+            }
+        } catch (error) {
+            console.error('Error toggling playback:', error);
+        }
+    }
+    
+    async previousTrack() {
+        if (!this.credentials.accessToken) return;
+        
+        try {
+            await fetch('https://api.spotify.com/v1/me/player/previous', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${this.credentials.accessToken}`
+                }
+            });
+        } catch (error) {
+            console.error('Error going to previous track:', error);
+        }
+    }
+    
+    async nextTrack() {
+        if (!this.credentials.accessToken) return;
+        
+        try {
+            await fetch('https://api.spotify.com/v1/me/player/next', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${this.credentials.accessToken}`
+                }
+            });
+        } catch (error) {
+            console.error('Error going to next track:', error);
         }
     }
     

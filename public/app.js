@@ -26,9 +26,12 @@ class FractalApp {
     initializeComponents() {
         this.fractalEngine = new FractalEngine(this.canvas);
         this.spotifyIntegration = new SpotifyIntegration();
+        this.mediaManager = new MediaManager();
         this.recordingManager = new RecordingManager(this.canvas);
         
         window.fractalEngine = this.fractalEngine;
+        window.spotifyIntegration = this.spotifyIntegration;
+        window.mediaManager = this.mediaManager;
     }
     
     setupEventListeners() {

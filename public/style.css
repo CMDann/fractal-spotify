@@ -132,11 +132,160 @@ button:disabled {
     align-items: center;
     justify-content: center;
     background: #000;
+    position: relative;
 }
 
 #fractalCanvas {
     max-width: 100%;
     max-height: 100%;
+}
+
+.album-cover {
+    position: absolute;
+    bottom: 20px;
+    right: 20px;
+    width: 200px;
+    background: #111;
+    border: 1px solid #333;
+    padding: 10px;
+    font-size: 11px;
+}
+
+.album-cover img {
+    width: 100%;
+    height: auto;
+    display: block;
+    margin-bottom: 8px;
+}
+
+#nowPlaying div {
+    margin-bottom: 3px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+#songTitle {
+    font-weight: bold;
+    font-size: 12px;
+}
+
+#artistName {
+    color: #ccc;
+}
+
+#albumName {
+    color: #999;
+    font-size: 10px;
+}
+
+.fullscreen-btn {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: #111;
+    border: 1px solid #333;
+    color: #fff;
+    padding: 5px 8px;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+.fullscreen-btn:hover {
+    background: #222;
+}
+
+.media-controls {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: #111;
+    border-top: 1px solid #333;
+    padding: 10px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    font-size: 11px;
+}
+
+.media-buttons {
+    display: flex;
+    gap: 5px;
+}
+
+.media-buttons button {
+    width: auto;
+    padding: 5px 8px;
+    margin: 0;
+    background: #222;
+    border: 1px solid #444;
+    color: #fff;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+.media-buttons button:hover {
+    background: #333;
+}
+
+.progress-container {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.progress-container span {
+    min-width: 35px;
+    font-size: 10px;
+}
+
+#progressBar {
+    flex: 1;
+}
+
+.volume-container {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+#volumeSlider {
+    width: 80px;
+}
+
+.audio-source-controls {
+    margin-top: 8px;
+}
+
+.audio-source-controls input[type="file"] {
+    margin: 3px 0;
+}
+
+.fullscreen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 1000;
+    background: #000;
+}
+
+.fullscreen .control-panel,
+.fullscreen .media-controls {
+    display: none;
+}
+
+.fullscreen .canvas-container {
+    width: 100vw;
+    height: 100vh;
+}
+
+.fullscreen #fractalCanvas {
+    width: 100vw;
+    height: 100vh;
 }
 
 #trackInfo {
