@@ -1,89 +1,225 @@
 class SpotifyIntegration {
     constructor() {
-        this.accessToken = null;
-        this.audioContext = null;
-        this.analyser = null;
-        this.dataArray = null;
+        this.credentials = {
+            clientId: null,
+            clientSecret: null,
+            accessToken: null,
+            refreshToken: null,
+            expiresAt: null
+        };
         this.currentTrack = null;
+        this.audioFeatures = null;
         this.isConnected = false;
-        this.player = null;
-        this.deviceId = null;
+        this.analysisData = null;
+        this.updateInterval = null;
         
-        this.initializeWebPlaybackSDK();
+        this.loadCredentials();
     }
     
-    initializeWebPlaybackSDK() {
-        if (!window.Spotify) {
-            const script = document.createElement('script');
-            script.src = 'https://sdk.scdn.co/spotify-player.js';
-            script.async = true;
-            document.head.appendChild(script);
-            
-            window.onSpotifyWebPlaybackSDKReady = () => {
-                this.setupWebPlaybackSDK();
-            };
-        } else {
-            this.setupWebPlaybackSDK();
+    async loadCredentials() {
+        const saved = localStorage.getItem('spotify_credentials');
+        if (saved) {
+            this.credentials = JSON.parse(saved);
+            this.populateFields();
         }
-    }
-    
-    setupWebPlaybackSDK() {
-        if (!this.accessToken) return;
         
-        this.player = new Spotify.Player({
-            name: 'Fractal Art Visualizer',
-            getOAuthToken: cb => { cb(this.accessToken); },
-            volume: 0.5
-        });
-        
-        this.player.addListener('ready', ({ device_id }) => {
-            this.deviceId = device_id;
-            console.log('Spotify player ready with device ID:', device_id);
-        });
-        
-        this.player.addListener('not_ready', ({ device_id }) => {
-            console.log('Spotify player not ready with device ID:', device_id);
-        });
-        
-        this.player.addListener('player_state_changed', (state) => {
-            if (state) {
-                this.currentTrack = state.track_window.current_track;
-                this.updateTrackDisplay();
+        try {
+            const response = await fetch('/api/spotify/credentials');
+            const data = await response.json();
+            if (data.access_token) {
+                this.credentials.accessToken = data.access_token;
+                this.credentials.refreshToken = data.refresh_token;
+                this.credentials.expiresAt = data.expires_at;
             }
-        });
-        
-        this.player.connect();
+        } catch (error) {
+            console.error('Error loading credentials:', error);
+        }
     }
     
-    setAccessToken(token) {
-        this.accessToken = token;
-        this.isConnected = true;
+    populateFields() {
+        if (this.credentials.clientId) {
+            document.getElementById('clientId').value = this.credentials.clientId;
+        }
+        if (this.credentials.accessToken) {
+            document.getElementById('accessToken').value = this.credentials.accessToken;
+        }
+        if (this.credentials.refreshToken) {
+            document.getElementById('refreshToken').value = this.credentials.refreshToken;
+        }
+    }
+    
+    async saveCredentials() {
+        this.credentials.clientId = document.getElementById('clientId').value;
+        this.credentials.clientSecret = document.getElementById('clientSecret').value;
+        this.credentials.accessToken = document.getElementById('accessToken').value;
+        this.credentials.refreshToken = document.getElementById('refreshToken').value;
+        this.credentials.expiresAt = Date.now() + (3600 * 1000);
         
-        if (window.Spotify) {
-            this.setupWebPlaybackSDK();
+        localStorage.setItem('spotify_credentials', JSON.stringify(this.credentials));
+        
+        try {
+            await fetch('/api/spotify/credentials', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(this.credentials)
+            });
+            
+            alert('Credentials saved successfully!');
+        } catch (error) {
+            console.error('Error saving credentials:', error);
+            alert('Error saving credentials');
+        }
+    }
+    
+    async connect() {
+        if (!this.credentials.accessToken) {
+            alert('Please provide access token');
+            return;
         }
         
-        this.getCurrentTrack();
-        this.startAudioAnalysis();
+        if (this.credentials.expiresAt && Date.now() > this.credentials.expiresAt) {
+            await this.refreshToken();
+        }
+        
+        this.isConnected = true;
+        this.startPolling();
+        
+        document.getElementById('connectSpotify').textContent = 'Connected!';
+        document.getElementById('connectSpotify').disabled = true;
+    }
+    
+    async refreshToken() {
+        if (!this.credentials.refreshToken) return;
+        
+        try {
+            const response = await fetch('/api/spotify/refresh', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    refresh_token: this.credentials.refreshToken,
+                    client_id: this.credentials.clientId,
+                    client_secret: this.credentials.clientSecret
+                })
+            });
+            
+            const data = await response.json();
+            if (data.access_token) {
+                this.credentials.accessToken = data.access_token;
+                this.credentials.expiresAt = data.expires_at;
+                localStorage.setItem('spotify_credentials', JSON.stringify(this.credentials));
+            }
+        } catch (error) {
+            console.error('Error refreshing token:', error);
+        }
+    }
+    
+    startPolling() {
+        this.updateInterval = setInterval(() => {
+            this.getCurrentTrack();
+            this.getAudioAnalysis();
+        }, 1000);
     }
     
     async getCurrentTrack() {
-        if (!this.accessToken) return;
+        if (!this.credentials.accessToken) return;
         
         try {
             const response = await fetch('https://api.spotify.com/v1/me/player/currently-playing', {
                 headers: {
-                    'Authorization': `Bearer ${this.accessToken}`
+                    'Authorization': `Bearer ${this.credentials.accessToken}`
+                }
+            });
+            
+            if (response.ok && response.status !== 204) {
+                const data = await response.json();
+                if (data.item && data.item.id !== this.currentTrack?.id) {
+                    this.currentTrack = data.item;
+                    this.updateTrackDisplay();
+                    this.getAudioFeatures();
+                }
+            }
+        } catch (error) {
+            console.error('Error fetching current track:', error);
+        }
+    }
+    
+    async getAudioFeatures() {
+        if (!this.credentials.accessToken || !this.currentTrack) return;
+        
+        try {
+            const response = await fetch(`https://api.spotify.com/v1/audio-features/${this.currentTrack.id}`, {
+                headers: {
+                    'Authorization': `Bearer ${this.credentials.accessToken}`
                 }
             });
             
             if (response.ok) {
-                const data = await response.json();
-                this.currentTrack = data.item;
-                this.updateTrackDisplay();
+                this.audioFeatures = await response.json();
             }
         } catch (error) {
-            console.error('Error fetching current track:', error);
+            console.error('Error fetching audio features:', error);
+        }
+    }
+    
+    async getAudioAnalysis() {
+        if (!this.credentials.accessToken || !this.currentTrack) return;
+        
+        try {
+            const response = await fetch(`https://api.spotify.com/v1/audio-analysis/${this.currentTrack.id}`, {
+                headers: {
+                    'Authorization': `Bearer ${this.credentials.accessToken}`
+                }
+            });
+            
+            if (response.ok) {
+                this.analysisData = await response.json();
+                this.processAudioData();
+            }
+        } catch (error) {
+            console.error('Error fetching audio analysis:', error);
+        }
+    }
+    
+    processAudioData() {
+        if (!this.analysisData || !this.audioFeatures) return;
+        
+        const currentTime = Date.now();
+        const trackStartTime = currentTime - (this.currentTrack.progress_ms || 0);
+        const relativeTime = (currentTime - trackStartTime) / 1000;
+        
+        const segments = this.analysisData.segments || [];
+        const currentSegment = segments.find(seg => 
+            relativeTime >= seg.start && relativeTime < seg.start + seg.duration
+        );
+        
+        if (currentSegment && window.fractalEngine) {
+            const intensity = Math.max(
+                currentSegment.loudness_max || 0,
+                currentSegment.loudness_start || 0
+            );
+            
+            const normalizedIntensity = Math.max(0, Math.min(1, (intensity + 60) / 60));
+            
+            const bassData = currentSegment.pitches ? currentSegment.pitches.slice(0, 4) : [0.5, 0.5, 0.5, 0.5];
+            const midData = currentSegment.pitches ? currentSegment.pitches.slice(4, 8) : [0.5, 0.5, 0.5, 0.5];
+            const trebleData = currentSegment.pitches ? currentSegment.pitches.slice(8, 12) : [0.5, 0.5, 0.5, 0.5];
+            
+            const audioData = {
+                energy: this.audioFeatures.energy,
+                valence: this.audioFeatures.valence,
+                tempo: this.audioFeatures.tempo,
+                danceability: this.audioFeatures.danceability,
+                intensity: normalizedIntensity,
+                bass: bassData.reduce((a, b) => a + b) / bassData.length,
+                mid: midData.reduce((a, b) => a + b) / midData.length,
+                treble: trebleData.reduce((a, b) => a + b) / trebleData.length
+            };
+            
+            window.fractalEngine.applyMusicData(audioData);
         }
     }
     
@@ -100,137 +236,15 @@ class SpotifyIntegration {
         }
     }
     
-    async startAudioAnalysis() {
-        try {
-            this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
-            this.analyser = this.audioContext.createAnalyser();
-            
-            this.analyser.fftSize = 256;
-            this.dataArray = new Uint8Array(this.analyser.frequencyBinCount);
-            
-            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-            const source = this.audioContext.createMediaStreamSource(stream);
-            source.connect(this.analyser);
-            
-            this.analyzeAudio();
-        } catch (error) {
-            console.error('Error starting audio analysis:', error);
-            this.simulateAudioData();
-        }
-    }
-    
-    analyzeAudio() {
-        if (!this.analyser || !this.dataArray) return;
-        
-        this.analyser.getByteFrequencyData(this.dataArray);
-        
-        if (window.fractalEngine) {
-            window.fractalEngine.applyMusicData(this.dataArray);
-        }
-        
-        requestAnimationFrame(() => this.analyzeAudio());
-    }
-    
-    simulateAudioData() {
-        const simulatedData = new Uint8Array(128);
-        const simulate = () => {
-            for (let i = 0; i < simulatedData.length; i++) {
-                simulatedData[i] = Math.random() * 255;
-            }
-            
-            if (window.fractalEngine) {
-                window.fractalEngine.applyMusicData(simulatedData);
-            }
-            
-            setTimeout(simulate, 100);
-        };
-        simulate();
-    }
-    
-    async getAudioFeatures() {
-        if (!this.accessToken || !this.currentTrack) return null;
-        
-        try {
-            const response = await fetch(`https://api.spotify.com/v1/audio-features/${this.currentTrack.id}`, {
-                headers: {
-                    'Authorization': `Bearer ${this.accessToken}`
-                }
-            });
-            
-            if (response.ok) {
-                return await response.json();
-            }
-        } catch (error) {
-            console.error('Error fetching audio features:', error);
-        }
-        
-        return null;
-    }
-    
-    async playTrack(trackUri) {
-        if (!this.accessToken || !this.deviceId) return;
-        
-        try {
-            await fetch(`https://api.spotify.com/v1/me/player/play?device_id=${this.deviceId}`, {
-                method: 'PUT',
-                headers: {
-                    'Authorization': `Bearer ${this.accessToken}`,
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    uris: [trackUri]
-                })
-            });
-        } catch (error) {
-            console.error('Error playing track:', error);
-        }
-    }
-    
-    async pauseTrack() {
-        if (!this.accessToken) return;
-        
-        try {
-            await fetch('https://api.spotify.com/v1/me/player/pause', {
-                method: 'PUT',
-                headers: {
-                    'Authorization': `Bearer ${this.accessToken}`
-                }
-            });
-        } catch (error) {
-            console.error('Error pausing track:', error);
-        }
-    }
-    
-    async resumeTrack() {
-        if (!this.accessToken) return;
-        
-        try {
-            await fetch('https://api.spotify.com/v1/me/player/play', {
-                method: 'PUT',
-                headers: {
-                    'Authorization': `Bearer ${this.accessToken}`
-                }
-            });
-        } catch (error) {
-            console.error('Error resuming track:', error);
-        }
-    }
-    
     disconnect() {
         this.isConnected = false;
-        this.accessToken = null;
-        this.currentTrack = null;
-        
-        if (this.player) {
-            this.player.disconnect();
-            this.player = null;
-        }
-        
-        if (this.audioContext) {
-            this.audioContext.close();
-            this.audioContext = null;
+        if (this.updateInterval) {
+            clearInterval(this.updateInterval);
+            this.updateInterval = null;
         }
         
         document.getElementById('trackInfo').innerHTML = 'Disconnected from Spotify';
+        document.getElementById('connectSpotify').textContent = 'Connect Spotify';
+        document.getElementById('connectSpotify').disabled = false;
     }
 }

@@ -23,6 +23,14 @@ class FractalEngine {
         
         this.juliaC = { real: -0.7, imag: 0.27015 };
         
+        this.renderScale = 0.5;
+        this.offscreenCanvas = document.createElement('canvas');
+        this.offscreenCtx = this.offscreenCanvas.getContext('2d');
+        this.needsRedraw = true;
+        this.lastRenderTime = 0;
+        this.targetFPS = 30;
+        this.frameTime = 1000 / this.targetFPS;
+        
         this.resize();
         this.render();
     }
@@ -33,61 +41,66 @@ class FractalEngine {
         this.height = container.clientHeight - 20;
         this.canvas.width = this.width;
         this.canvas.height = this.height;
-        this.imageData = this.ctx.createImageData(this.width, this.height);
+        
+        const scaledWidth = Math.floor(this.width * this.renderScale);
+        const scaledHeight = Math.floor(this.height * this.renderScale);
+        
+        this.offscreenCanvas.width = scaledWidth;
+        this.offscreenCanvas.height = scaledHeight;
+        this.imageData = this.offscreenCtx.createImageData(scaledWidth, scaledHeight);
+        
+        this.needsRedraw = true;
     }
     
-    mandelbrot(x, y) {
+    mandelbrot(x, y, width, height) {
         const maxIter = this.maxIterations;
         let zx = 0, zy = 0;
-        let cx = (x - this.width / 2) / (this.width / 4) / this.zoom + this.offsetX;
-        let cy = (y - this.height / 2) / (this.height / 4) / this.zoom + this.offsetY;
+        let cx = (x - width / 2) / (width / 4) / this.zoom + this.offsetX;
+        let cy = (y - height / 2) / (height / 4) / this.zoom + this.offsetY;
         
         for (let i = 0; i < maxIter; i++) {
-            let tmp = zx * zx - zy * zy + cx;
-            zy = 2 * zx * zy + cy;
-            zx = tmp;
-            
             if (zx * zx + zy * zy > 4) {
                 return i;
             }
+            let tmp = zx * zx - zy * zy + cx;
+            zy = 2 * zx * zy + cy;
+            zx = tmp;
         }
         return maxIter;
     }
     
-    julia(x, y) {
+    julia(x, y, width, height) {
         const maxIter = this.maxIterations;
-        let zx = (x - this.width / 2) / (this.width / 4) / this.zoom;
-        let zy = (y - this.height / 2) / (this.height / 4) / this.zoom;
+        let zx = (x - width / 2) / (width / 4) / this.zoom;
+        let zy = (y - height / 2) / (height / 4) / this.zoom;
         
         let cx = this.juliaC.real + Math.sin(this.time * 0.01) * 0.3;
         let cy = this.juliaC.imag + Math.cos(this.time * 0.01) * 0.3;
         
         for (let i = 0; i < maxIter; i++) {
-            let tmp = zx * zx - zy * zy + cx;
-            zy = 2 * zx * zy + cy;
-            zx = tmp;
-            
             if (zx * zx + zy * zy > 4) {
                 return i;
             }
+            let tmp = zx * zx - zy * zy + cx;
+            zy = 2 * zx * zy + cy;
+            zx = tmp;
         }
         return maxIter;
     }
     
-    burningShip(x, y) {
+    burningShip(x, y, width, height) {
         const maxIter = this.maxIterations;
         let zx = 0, zy = 0;
-        let cx = (x - this.width / 2) / (this.width / 4) / this.zoom + this.offsetX;
-        let cy = (y - this.height / 2) / (this.height / 4) / this.zoom + this.offsetY;
+        let cx = (x - width / 2) / (width / 4) / this.zoom + this.offsetX;
+        let cy = (y - height / 2) / (height / 4) / this.zoom + this.offsetY;
         
         for (let i = 0; i < maxIter; i++) {
-            let tmp = zx * zx - zy * zy + cx;
-            zy = Math.abs(2 * zx * zy) + cy;
-            zx = Math.abs(tmp);
-            
             if (zx * zx + zy * zy > 4) {
                 return i;
             }
+            let tmp = zx * zx - zy * zy + cx;
+            zy = Math.abs(2 * zx * zy) + cy;
+            zx = Math.abs(tmp);
         }
         return maxIter;
     }
