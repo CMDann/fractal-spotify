@@ -5,8 +5,8 @@
 }
 
 body {
-    font-family: 'Arial', sans-serif;
-    background: #1a1a1a;
+    font-family: 'Courier New', monospace;
+    background: #000;
     color: #fff;
     overflow: hidden;
 }
@@ -17,75 +17,79 @@ body {
 }
 
 .control-panel {
-    width: 300px;
-    background: #2d2d2d;
-    padding: 20px;
+    width: 250px;
+    background: #000;
+    padding: 10px;
     overflow-y: auto;
-    border-right: 2px solid #444;
+    border-right: 1px solid #333;
 }
 
 .control-panel h2 {
-    margin-bottom: 20px;
+    margin-bottom: 15px;
     color: #fff;
-    text-align: center;
+    font-size: 16px;
+    font-weight: normal;
 }
 
 .section {
-    margin-bottom: 25px;
-    padding: 15px;
-    background: #333;
-    border-radius: 8px;
+    margin-bottom: 15px;
+    padding: 8px;
+    background: #111;
+    border: 1px solid #333;
 }
 
 .section h3 {
-    margin-bottom: 10px;
-    color: #ff6b6b;
+    margin-bottom: 8px;
+    color: #fff;
+    font-size: 12px;
+    font-weight: normal;
+    text-transform: uppercase;
 }
 
 select, input[type="text"] {
     width: 100%;
-    padding: 8px;
-    background: #444;
-    border: 1px solid #555;
+    padding: 4px;
+    background: #000;
+    border: 1px solid #666;
     color: #fff;
-    border-radius: 4px;
+    font-family: 'Courier New', monospace;
+    font-size: 11px;
 }
 
 .color-controls {
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 6px;
 }
 
 .color-group {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 6px;
 }
 
 .color-group label {
     flex: 1;
-    font-size: 14px;
+    font-size: 11px;
 }
 
 .color-group input[type="color"] {
-    width: 40px;
-    height: 30px;
-    border: none;
-    border-radius: 4px;
+    width: 30px;
+    height: 20px;
+    border: 1px solid #666;
     cursor: pointer;
 }
 
 .slider-group {
     display: flex;
     align-items: center;
-    gap: 10px;
-    margin-bottom: 10px;
+    gap: 6px;
+    margin-bottom: 6px;
 }
 
 .slider-group label {
     flex: 1;
-    font-size: 14px;
+    font-size: 11px;
 }
 
 .slider-group input[type="range"] {
@@ -93,31 +97,32 @@ select, input[type="text"] {
 }
 
 .slider-group span {
-    width: 40px;
+    width: 30px;
     text-align: center;
-    font-size: 12px;
+    font-size: 10px;
     color: #ccc;
 }
 
 button {
     width: 100%;
-    padding: 10px;
-    margin: 5px 0;
-    background: #ff6b6b;
-    border: none;
-    border-radius: 4px;
-    color: white;
+    padding: 6px;
+    margin: 3px 0;
+    background: #222;
+    border: 1px solid #666;
+    color: #fff;
     cursor: pointer;
-    font-size: 14px;
-    transition: background 0.3s;
+    font-size: 11px;
+    font-family: 'Courier New', monospace;
+    transition: background 0.2s;
 }
 
 button:hover {
-    background: #ff5252;
+    background: #333;
 }
 
 button:disabled {
-    background: #666;
+    background: #111;
+    color: #666;
     cursor: not-allowed;
 }
 
@@ -130,29 +135,28 @@ button:disabled {
 }
 
 #fractalCanvas {
-    border: 2px solid #444;
     max-width: 100%;
     max-height: 100%;
 }
 
 #trackInfo {
-    margin-top: 10px;
-    padding: 10px;
-    background: #444;
-    border-radius: 4px;
-    font-size: 12px;
+    margin-top: 6px;
+    padding: 6px;
+    background: #111;
+    border: 1px solid #333;
+    font-size: 10px;
 }
 
 #recordingStatus {
-    margin-top: 10px;
-    padding: 10px;
-    background: #444;
-    border-radius: 4px;
-    font-size: 12px;
+    margin-top: 6px;
+    padding: 6px;
+    background: #111;
+    border: 1px solid #333;
+    font-size: 10px;
     text-align: center;
 }
 
 .recording {
-    color: #ff6b6b;
-    font-weight: bold;
+    color: #fff;
+    font-weight: normal;
 }
